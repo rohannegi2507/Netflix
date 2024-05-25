@@ -1,27 +1,22 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useRef, useState } from 'react'
 import Header from '../components/Header'
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, UserCredential } from 'firebase/auth';
 import { auth } from '../utils/firebase';
 import { validateData } from '../utils/validate';
-import { useDispatch, useSelector } from 'react-redux';
-import { addUser, USER } from '../utils/userSlice';
+import { useDispatch } from 'react-redux';
+import { addUser } from '../utils/userSlice';
 import { useNavigate } from 'react-router-dom';
 
 const Login = () => {
   const [isNewUser, setIsNewUser] = useState(true)
   const [errorString, setErrorString] = useState('')
+
   const fullName = useRef<HTMLInputElement>(null)
   const email = useRef<HTMLInputElement>(null)
   const password = useRef<HTMLInputElement>(null)
 
   const dispatch = useDispatch()
   const navigate = useNavigate();
-  const state = useSelector((state: { user: USER }) => state.user.userInfo)
-
-  useEffect(() => {
-    console.log("state -- store", state)
-  }, [state])
-
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -33,23 +28,22 @@ const Login = () => {
       if (validateData(email.current?.value, password.current?.value)) {
         let userData
         if (isNewUser) {
-          userData = await createUserWithEmailAndPassword(auth, email.current?.value, password.current?.value)
+          const firebaseUser = await createUserWithEmailAndPassword(auth, email.current?.value, password.current?.value)
+          userData =  await updateProfile(firebaseUser.user, {displayName:fullName.current?.value, photoURL:"https://avatars.githubusercontent.com/u/49731384?v=4" })
+          dispatch(addUser({name: auth.currentUser?.displayName, email: auth.currentUser?.email, photoURL: auth.currentUser?.photoURL}))
+         
         } else {
           userData = await signInWithEmailAndPassword(auth, email.current?.value, password.current?.value)
+          dispatch(addUser({name: userData.user.displayName, email: userData.user.email, photoURL:userData.user.photoURL}))
         }
-
-        dispatch(addUser(userData.user))
         navigate('/browser')
-        console.log("user", userData.user)
       }
     } catch (e) {
       if(typeof e === 'string') {
         setErrorString(e.toString())
-      }
-      
+      } 
       console.error("error", e)
     }
-
   }
 
   return (
@@ -74,8 +68,6 @@ const Login = () => {
           <span>{isNewUser ? 'New to Netflix ? ' : 'Aleady a user ? '}</span>
           <button className="inline font-bold ml-1" onClick={() => { setIsNewUser(!isNewUser) }}>{isNewUser ? ' Sign up' : ' Sign in'}</button>
         </p>
-
-
       </div>
 
     </div>
