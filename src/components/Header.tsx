@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import  { useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { auth } from '../utils/firebase'
 import { useNavigate } from 'react-router-dom'
@@ -8,7 +8,7 @@ import { NETFLIX_LOGO } from '../utils/constant'
 
 const Header = () => {
   const navigate = useNavigate()
-  const userInfo = useSelector((state) => state.user.userInfo)
+  const userInfo = useSelector((state:any) => state.user.userInfo)
   const dispatch = useDispatch()
 
   useEffect(() => {
